@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="robots" content="noindex, nofollow, noarchive, nosnippet" />
+    <meta name="googlebot" content="noindex, nofollow" />
+    <meta name="referrer" content="no-referrer" />
+    <meta name="theme-color" content="#140e14" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="保管庫" />
+    <meta name="description" content="自分専用の非公開ギャラリー" />
+    <title>保管庫</title>
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" href="./icons/favicon.png" type="image/png" />
+    <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div id="app">
+      <section id="auth-screen" class="screen auth-screen" hidden>
+        <div class="auth-card">
+          <img class="auth-logo" src="./icons/icon-192.png" width="72" height="72" alt="" />
+          <h1>保管庫</h1>
+          <p class="auth-lead">自分だけが見られる、写真と動画のギャラリーです。</p>
+          <form id="auth-form" autocomplete="on">
+            <label>
+              メールアドレス
+              <input id="auth-email" type="email" name="email" inputmode="email" autocomplete="username" required />
+            </label>
+            <label>
+              パスワード
+              <input id="auth-password" type="password" name="password" autocomplete="current-password" minlength="8" required />
+            </label>
+            <p id="auth-error" class="error" hidden></p>
+            <p id="auth-notice" class="notice" hidden></p>
+            <button type="submit" id="auth-submit" class="btn primary">ログイン</button>
+          </form>
+          <button type="button" id="auth-toggle" class="btn link">初めて使う（アカウント作成）</button>
+        </div>
+      </section>
+
+      <section id="main-screen" class="screen main-screen" hidden>
+        <header class="topbar">
+          <div class="topbar-title">
+            <h1>保管庫</h1>
+            <span id="count-label" class="muted"></span>
+          </div>
+          <div class="topbar-actions">
+            <button type="button" id="btn-upload" class="btn icon" aria-label="追加">＋</button>
+            <button type="button" id="btn-menu" class="btn icon" aria-label="メニュー">⋯</button>
+          </div>
+        </header>
+        <div class="filters">
+          <select id="folder-filter" aria-label="フォルダ">
+            <option value="">すべてのフォルダ</option>
+          </select>
+          <input id="tag-filter" type="search" placeholder="タグで絞り込み" enterkeyhint="search" />
+        </div>
+        <div id="empty-state" class="empty" hidden>
+          <p>まだ何も入っていません。</p>
+          <button type="button" id="btn-upload-empty" class="btn primary">写真や動画を追加</button>
+        </div>
+        <div id="grid" class="grid" hidden></div>
+      </section>
+    </div>
+
+    <div id="menu-sheet" class="sheet" hidden>
+      <div class="sheet-backdrop" data-close="menu"></div>
+      <div class="sheet-panel" role="dialog" aria-label="メニュー">
+        <button type="button" id="btn-logout" class="btn danger-text">ログアウト</button>
+        <button type="button" data-close="menu" class="btn">閉じる</button>
+      </div>
+    </div>
+
+    <div id="upload-sheet" class="sheet" hidden>
+      <div class="sheet-backdrop" data-close="upload"></div>
+      <div class="sheet-panel" role="dialog" aria-label="アップロード">
+        <h2>追加する</h2>
+        <form id="upload-form">
+          <label class="file-drop">
+            <input id="file-input" type="file" accept="image/*,video/*" multiple />
+            <span>写真や動画を選択（複数可）</span>
+          </label>
+          <p id="file-summary" class="muted"></p>
+          <label>
+            フォルダ（任意）
+            <input id="upload-folder" type="text" list="folder-list" placeholder="例：2026-11" />
+          </label>
+          <datalist id="folder-list"></datalist>
+          <label>
+            タグ（任意・カンマ区切り）
+            <input id="upload-tags" type="text" placeholder="例：お気に入り, 旅行" />
+          </label>
+          <p id="upload-error" class="error" hidden></p>
+          <div id="upload-progress" class="progress" hidden>
+            <div id="upload-bar"></div>
+            <span id="upload-status"></span>
+          </div>
+          <div class="row">
+            <button type="button" class="btn" data-close="upload">キャンセル</button>
+            <button type="submit" id="upload-submit" class="btn primary" disabled>アップロード</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="viewer" class="viewer" hidden>
+      <button type="button" id="viewer-close" class="viewer-btn" aria-label="閉じる">×</button>
+      <button type="button" id="viewer-prev" class="viewer-btn nav prev" aria-label="前へ">‹</button>
+      <button type="button" id="viewer-next" class="viewer-btn nav next" aria-label="次へ">›</button>
+      <div id="viewer-stage" class="viewer-stage"></div>
+      <div class="viewer-meta">
+        <div>
+          <p id="viewer-name"></p>
+          <p id="viewer-sub" class="muted"></p>
+        </div>
+        <div class="viewer-actions">
+          <button type="button" id="viewer-edit" class="btn">タグ編集</button>
+          <button type="button" id="viewer-delete" class="btn danger">削除</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="edit-sheet" class="sheet" hidden>
+      <div class="sheet-backdrop" data-close="edit"></div>
+      <div class="sheet-panel" role="dialog" aria-label="タグとフォルダ">
+        <h2>タグとフォルダ</h2>
+        <form id="edit-form">
+          <label>
+            フォルダ
+            <input id="edit-folder" type="text" list="folder-list" />
+          </label>
+          <label>
+            タグ（カンマ区切り）
+            <input id="edit-tags" type="text" />
+          </label>
+          <div class="row">
+            <button type="button" class="btn" data-close="edit">キャンセル</button>
+            <button type="submit" class="btn primary">保存</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
